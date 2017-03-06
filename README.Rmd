@@ -1,0 +1,7 @@
+# About the project
+
+This is the final assignment for Open Data Science course.
+
+# Course Diary
+
+The assignment can be found here: <https://gintarebaublyte.github.io/IODS-final/>

@@ -1,30 +1,113 @@
 ---
-title: "Index"
-author: "Gintare Baublyte"
-date: "6 March 2017"
-output: html_document
+title: "IODS Final Assignment"
+author: "Gintare Baublyte (gintare.baublyte@helsinki.fi)"
+date: "07 March 2017"
+output:
+  html_document:
+    code_folding: hide
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 6
+    theme: spacelab
+    toc: yes
+    toc_depth: 2
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+#Abstract
+
+
+#Research question
+
+
+#Data
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(MASS)
+library(dplyr)
+library('corrplot')
+library(GGally)
+library(tidyr)
+library(ggplot2)
+hr_sales <- read.table(file = "hr_sales.txt", header = T, sep = ";")
+```
+The dataset is related to human resources and it is great for analysing why some of the employees leave their positions pre-maturely. It is **simulated** data. The dataset can be downloaded from here: https://www.kaggle.com/ludobenistant/hr-analytics.
+
+The data represents different variables that could affect work satisfation level. 
+
+The original data was wrangled prior to this analysis. The data wrangling file can be accessed here: ...
+
+In the wrangled dataset, there are 4140 observations and 10 variables. In the original data there was a number of people that worked in different departments. Since majority of them was from the sales department and since the general environment and work practices can be highly different between departments, I have decided to focus only on the sales department. Thus the department variable from the origical dataset was removed after filtering out only that data that was related to the sales department.  
+  
+
+Additionally, I have created a new logical variable "*<span style="color:red">satisfied</span>*" that is **true** if the work satisfaction level is higher than the average (0.6144) and **false** otherwise.  
+
+```{r}
+str(hr_sales)
 ```
 
-## R Markdown
+The variables in the dataset are:  
+1.  *<span style="color:red">satisfaction_level</span>* - employee satisfaction level (0-1)  
+2.  *<span style="color:red">last_evaluation</span>* - evaluation of employee performance (0-1)  
+3.  *<span style="color:red">number_project</span>* - number of projects completed while at work  
+4.  *<span style="color:red">average_montly_hours</span>* - average monthly hours at workplace  
+5.  *<span style="color:red">time_spend_company</span>* - number of years spent in the company  
+6.  *<span style="color:red">Work_accident</span>* - whether the employee had a workplace accident or not (1 or 0)  
+7.  *<span style="color:red">left</span>* - whether the employee left the workplace or not (1 or 0)  
+8.  *<span style="color:red">promotion_last_5years</span>* - whether the employee was promoted in the last five years or not (1 or 0)  
+9.  *<span style="color:red">salary</span>* - relative level of salary (low med high)  
+10.  *<span style="color:red">satisfied</span>* - satisfaction level, which is true if higher than average and false otherwise  
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+##Variables
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+The summaries of the variables are presented bellow. A number of findings can be seen from the table:  
+* Employee satisfaction level ranges from 0.09 up to the highest possible value 1. The average satisfaction, as mentioned earlier, is 0.6144.  
+* The average evaluation score of employee performace in the sales department was above 0.7.  
+* Employees work on 2-7 projects at work with average of 3.776.  
+* The average monthly hours spent at work range from 0.96 to maximum of 310 with the mean value of around 201.  
+* Average employee in the sales department has spent 3 years in the company. The longest that an employee has work in the company is 10 years and the shortest is 2 years.  
+* The average value of accidents at work is 0.1418, which indicates that majority of employees haven't had any work related accidents.  
+* The mean value of variable *<span style="color:red">left</span>* is 0.2449 which means that majority of people haven't left the workplace. 
+* Most of the employees haven't received a promotion in the past 5 years.  
+* The majority of employees are getting low salary, while only 269 emplyees are getting high salary.  
+* The newly created logical variable indicated that more people have higher than average job satisfaction.  
 
-```{r cars}
-summary(cars)
+
+```{r}
+summary(hr_sales)
+```
+It seems that those who worked 2 or 8 years have a higher ration of satisfied with their job people among them compared to other durations. Those who worked 2 or 3 years seem to be least happy with their job. 
+
+```{r}
+table_years <- xtabs(~satisfied+time_spend_company, data=hr_sales)
+ftable(table_years)
+
+counts_years <- table(hr_sales$satisfied, hr_sales$time_spend_company)
+barplot(counts_years, main="Years in company vs Satisfaction with job",
+  xlab="Years in company", col=c("darkblue","red"),
+    legend = rownames(counts_years), beside=TRUE)
 ```
 
-## Including Plots
+The plot shows an interesting relationship between the last evaluation score and satisfaction with job. It seems that employees satisfied with their job received a higher score on their last performance evaluation. The middle 50% of employees that aren't satisfied with their job received scores from around 0.5 to bit over 0.8 with a mean of 0.65. Those who are satisfied with their job (mid 50% of them) received scores from 0.6 to 0.9 with a mean of 0.75.
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+g1 <- ggplot(hr_sales, aes(x = satisfied, y= last_evaluation))
+g1 + geom_boxplot(aes()) + xlab("Satisfaction with job") + ylab("Last evaluation score") + ggtitle("Last evaluation score by job satisfaction")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+#Analysis
+
+
+
+##Method
+
+
+##Results
+
+
+#Discussion and conclusions
+
+
+

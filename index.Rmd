@@ -10,7 +10,7 @@ output:
     fig_width: 6
     theme: spacelab
     toc: yes
-    toc_depth: 2
+    toc_depth: 3
 ---
 
 
@@ -31,7 +31,7 @@ library(tidyr)
 library(ggplot2)
 hr_sales <- read.table(file = "hr_sales.txt", header = T, sep = ";")
 ```
-The dataset is related to human resources and it is great for analysing why some of the employees leave their positions pre-maturely. It is **simulated** data. The dataset can be downloaded from here: https://www.kaggle.com/ludobenistant/hr-analytics.
+The dataset is related to human resources and it is great for analysing why some of the employees leave their positions pre-maturely. It is **simulated** data. However, I will be using this data to analyse how emplyees' work satisfaction depends on their workload, and other factors. The dataset can be downloaded from here: https://www.kaggle.com/ludobenistant/hr-analytics.
 
 The data represents different variables that could affect work satisfation level. 
 
@@ -76,7 +76,39 @@ The summaries of the variables are presented bellow. A number of findings can be
 ```{r}
 summary(hr_sales)
 ```
-It seems that those who worked 2 or 8 years have a higher ration of satisfied with their job people among them compared to other durations. Those who worked 2 or 3 years seem to be least happy with their job. 
+
+###Performance evaluation
+
+The plot shows an interesting relationship between the last evaluation score and satisfaction with job. It seems that employees satisfied with their job received a higher score on their last performance evaluation. The middle 50% of employees that aren't satisfied with their job received scores from around 0.5 to bit over 0.8 with a mean of 0.65. Those who are satisfied with their job (mid 50% of them) received scores from 0.6 to 0.9 with a mean of 0.75.  
+
+```{r}
+g1 <- ggplot(hr_sales, aes(x = satisfied, y= last_evaluation))
+g1 + geom_boxplot(aes()) + xlab("Satisfaction with job") + ylab("Last evaluation score") + ggtitle("Last evaluation score by job satisfaction")
+```
+
+###Number of projects
+
+On the one hand, it looks like that employees who are satisfied with their jobs tend to work on more projects. Middle 50% of employees that are happy with their jobs work on 3-5 projects with a mean of 4, compared to 2-5 project with a mean of 3 of those who are unsatisfied with their jobs. However, as can be seen in the plot, only those employees who are not satisfied with their jobs are working on more than 6 projects, which could mean that in order to gain satisfaction from job, one must feel that he/she is needed at the workplace but not exploited.
+
+```{r}
+g2 <- ggplot(hr_sales, aes(x = satisfied, y= number_project))
+g2 + geom_boxplot(aes()) + xlab("Satisfaction with job") + ylab("Number of projects") + ggtitle("Number of projects by job satisfaction")
+```
+
+###Average monthly hours
+
+Similar results are seen here as in the number of projects section. Which is again confirming that employees want to feel needed and important, however, not exploited.
+
+```{r}
+g3 <- ggplot(hr_sales, aes(x = satisfied, y= average_montly_hours))
+g3 + geom_boxplot(aes()) + xlab("Satisfaction with job") + ylab("Average monthly hours") + ggtitle("Average monthly hours by job satisfaction")
+```
+
+
+
+###Years spent in the company
+
+It seems that those who worked 2 or 8 years have a higher ratio of satisfied with their job people among them compared to other durations. Those who worked 2 or 3 years seem to be least happy with their job. 
 
 ```{r}
 table_years <- xtabs(~satisfied+time_spend_company, data=hr_sales)
@@ -87,12 +119,28 @@ barplot(counts_years, main="Years in company vs Satisfaction with job",
   xlab="Years in company", col=c("darkblue","red"),
     legend = rownames(counts_years), beside=TRUE)
 ```
+###Work accidents
 
-The plot shows an interesting relationship between the last evaluation score and satisfaction with job. It seems that employees satisfied with their job received a higher score on their last performance evaluation. The middle 50% of employees that aren't satisfied with their job received scores from around 0.5 to bit over 0.8 with a mean of 0.65. Those who are satisfied with their job (mid 50% of them) received scores from 0.6 to 0.9 with a mean of 0.75.
+This grapgh doesn't indicate any clear relationship between work accidents and job satisfaction. However, the number of people who had an accident at work is really low compared to those who haven't and in a field like sales it is highly unlikely that employees could get into very serious accidents related to work (compared to someone working at an assembly unit in a factory or dealing with some chemicals).
 
 ```{r}
-g1 <- ggplot(hr_sales, aes(x = satisfied, y= last_evaluation))
-g1 + geom_boxplot(aes()) + xlab("Satisfaction with job") + ylab("Last evaluation score") + ggtitle("Last evaluation score by job satisfaction")
+table_accidents <- xtabs(~satisfied+Work_accident, data=hr_sales)
+ftable(table_accidents)
+
+counts_accidents <- table(hr_sales$satisfied, hr_sales$Work_accident)
+barplot(counts_accidents, main="Work accidents vs Satisfaction with job",
+  xlab="Work accidents", col=c("darkblue","red"),
+    legend = rownames(counts_years), beside=TRUE)
+```
+
+###Promotion
+
+Another variable in the data set is about promotion (whether an employee has received a promotion in the past 5 years). The table below shows that very few employees have actually received a promotion. It indicates that around 49% of those who received a promotion were not satisfied with their job. 
+
+
+```{r}
+table_promotion <- xtabs(~satisfied+promotion_last_5years, data=hr_sales)
+ftable(table_promotion)
 ```
 
 

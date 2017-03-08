@@ -15,27 +15,30 @@ output:
 
 
 #Abstract
-
+The purpose of this research is to analyse what variables affect job satisfaction. Number of variables were analysed in relation to high or low job satisfaction. In addition to that logistic regression was used to fit a model with a number of variables. The results show that last performance evaluation and average monthly hours at work seem to have the highest effect on job satisfaction. However, the model is not very good at explaining the dependant variable. The topic needs further exploration with a different set of data.
 
 #Research question
 
+The research will try to answer what variables affect job satisfaction.
 
 #Data
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
+setwd("C:/Users/Severi/Documents/GitHub/IODS-final")
 library(MASS)
 library(dplyr)
 library('corrplot')
 library(GGally)
 library(tidyr)
 library(ggplot2)
+library(FactoMineR)
 hr_sales <- read.table(file = "hr_sales.txt", header = T, sep = ";")
 ```
 The dataset is related to human resources and it is great for analysing why some of the employees leave their positions pre-maturely. It is **simulated** data. However, I will be using this data to analyse how emplyees' work satisfaction depends on their workload, and other factors. The dataset can be downloaded from here: https://www.kaggle.com/ludobenistant/hr-analytics.
 
 The data represents different variables that could affect work satisfation level. 
 
-The original data was wrangled prior to this analysis. The data wrangling file can be accessed here: ...
+The original data was wrangled prior to this analysis. The data wrangling file can be accessed here: https://github.com/GintareBaublyte/IODS-final/blob/master/create_hr.R
 
 In the wrangled dataset, there are 4140 observations and 10 variables. In the original data there was a number of people that worked in different departments. Since majority of them was from the sales department and since the general environment and work practices can be highly different between departments, I have decided to focus only on the sales department. Thus the department variable from the origical dataset was removed after filtering out only that data that was related to the sales department.  
   
@@ -119,6 +122,7 @@ barplot(counts_years, main="Years in company vs Satisfaction with job",
   xlab="Years in company", col=c("darkblue","red"),
     legend = rownames(counts_years), beside=TRUE)
 ```
+
 ###Work accidents
 
 This grapgh doesn't indicate any clear relationship between work accidents and job satisfaction. However, the number of people who had an accident at work is really low compared to those who haven't and in a field like sales it is highly unlikely that employees could get into very serious accidents related to work (compared to someone working at an assembly unit in a factory or dealing with some chemicals).
@@ -143,19 +147,108 @@ table_promotion <- xtabs(~satisfied+promotion_last_5years, data=hr_sales)
 ftable(table_promotion)
 ```
 
+###Salary
+
+The frequencies table shows that around 58% of employees earning high salary are unsatisfied with their jobs, while the proportion of unsatisfied employees is much higher among those employees who earn low (95%) or medium (81%) salary. 
+
+```{r}
+table_salary <- xtabs(~satisfied+salary, data=hr_sales)
+ftable(table_salary)
+```
 
 
 #Analysis
 
-
+The data will be analysed using logistic regression method to see whether the variables (selected predictors) are able to statistically significantly predict *satisfied* (whether or not employees are satisfied with their job).
 
 ##Method
 
+The logistic regression is a method that allows us to estimate how probable it is to get one or the other value of a binary variable based on one or more independent variables.   
+  
+In this case, the model will be fitted by adding those variables that seemed to have some relationship with *satisfied* in the variable analysis in the previous section. Thos variables are:  
+1. last_evaluation - the result of last performance evaluation of the employee  
+2. number_project - number of projects  
+3. average_montly_hours - average monthly hours at work  
+4. time_spend_company - years spent in the company  
+5. salary - the level of salary (high, medium, low)
 
 ##Results
+
+The fitted model shows that *number_project* does not have a statistically significant effect on the dependant variable. All other variables seem to have significance ranging from high to low.
+
+```{r}
+m <- glm(satisfied ~ last_evaluation + number_project + average_montly_hours + time_spend_company + salary, data = hr_sales, family = "binomial")
+
+summary(m)
+```
+
+Now, let's look at the odd rations and their confidence intervals. So, it seems that those who were evaluated higher in their last performance evaluation, are 7.4 times more likely to be satisfied with their work. Average monthly hours at work are also associated with job satisfaction, however, the effect is modest.. Other variables don't seem to have an effect on job satisfaction. 
+
+
+```{r, message=FALSE, warning=FALSE}
+OR <- coef(m) %>% exp
+CI <- confint(m) %>% exp
+cbind(OR, CI)
+```
+
+Now the model will be adjusted an only *last_evaluation* and *average_montly_hours* will be included in the model.
+
+```{r}
+m2 <- glm(satisfied ~ last_evaluation + average_montly_hours, data = hr_sales, family = "binomial")
+
+summary(m2)
+```
+
+Let's look at the odd rations and their CIs. So it still looks quite similar to the first model with *last_evaluation* having the highest prediction effect.
+
+
+```{r, message=FALSE, warning=FALSE}
+OR2 <- coef(m2) %>% exp
+CI2 <- confint(m2) %>% exp
+cbind(OR2, CI2)
+```
+
+The seconf model is used to create a prediction variable and then the prediction was used to see how many values the model predicted correctly.   
+  
+The table shows that 23% out 39% of cases model correctly predicted low satisfaction with job, while 38% out of 61% of cases model correctly predicted high job satisfaction. It seems that the model is quite poor in predicting the values.
+
+```{r}
+probabilities <- predict(m2, type = "response")
+hr_sales <- mutate(hr_sales, probability = probabilities)
+hr_sales <- mutate(hr_sales, prediction = probability > 0.5 )
+
+table(satisfied = hr_sales$satisfied, prediction = hr_sales$prediction) %>% prop.table() %>% addmargins()
+```
+
+Bellow, a penalty/loss rate is calculated to see how many times the fitted model has classified the observations incorrectly. The result shows that on average 39 cases were predicted incorrectly.
+
+```{r}
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+loss_func(class = hr_sales$satisfied, prob = hr_sales$probability)
+```
+A cross validation helps see how the model will perform with randomly allocated part of the dataset. The result shows on average 38.6 incorrect classifications. The number is very slighly lower than the above obtained. 
+
+
+```{r}
+library(boot)
+cv <- cv.glm(data = hr_sales, cost = loss_func, glmfit = m, K = 10)
+cv$delta[1]
+```
 
 
 #Discussion and conclusions
 
-
+The original dataset was intended to be used for analysing why some employees leave their work prematurelly. However, I have decided to analyse what affects employee satisfaction with their job using the same dataset.  
+  
+I was expecting to see that the average monthly hours spent at work, work accidents, salary and promotions could affect job satisfaction. However, the results seemed to be different. Just by looking at different variables and their relationship with job satisfaction it got quite clear that many of the variables were not linked to job satisfaction. The logistic regression in the end showed that only last performance evaluation score and average working monthly hours can be used to explain the job satisfaction. However, even then it seems that the model is not good enough to explain this relationship.  
+  
+Average monthly hours indicated that employees seem to be more satisfied with their job if they work longer hours (meaning, full-time, rather than part-time). It could indicated that they are more commited and more connected to their job and their goals are more in-line with company's goals.  
+  
+Last performance evaluation score is highly related to job satisfaction. It probably has a couple of reasons for it. Firstly, it could indicate that employees who received higher score were actually better connected to the overall company's vision and mission and therefore both performed better and were more satisfied with their job. Secondly, higher score to an employee can indicate that he or she is valued in the company and that the work he or she does is important, thus making the person feel more satisfied with their job.  
+  
+Overall, it might have been a mistake to use this data for analysis job satisfaction with the data that was meant for analysing a different issue. Job satisfaction is depended on many different variables that were not part of this dataset, thus this question needs to be addressed using different data.
 

@@ -1,3 +1,8 @@
+---
+output: 
+  html_document: 
+    theme: cosmo
+---
 # About the research
 
 This is the final assignment for Open Data Science course. The research is about job satisfaction and what variables affect it.
